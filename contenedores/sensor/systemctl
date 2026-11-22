@@ -1,0 +1,19 @@
+#!/bin/sh
+# En el contenedor no hay systemd. El panel pregunta «systemctl is-active» por
+# sus servicios; esto responde mirando si el PROCESO equivalente está vivo, así
+# que el verde/rojo del panel sigue siendo verdad.
+[ "${1:-}" = "is-active" ] || { echo "systemctl (demo): solo is-active" >&2; exit 1; }
+shift
+rc=0
+for s in "$@"; do
+  case "$s" in
+    ppi-motor.service|ppi-motor)                 patron='motor_decision.py' ;;
+    ppi-motor-capture.service|ppi-motor-capture) patron='tcpdump .*live-' ;;
+    suricata.service|suricata)                   patron='suricata -i' ;;
+    ppi-dashboard.service|ppi-dashboard)         patron='dashboard.py' ;;
+    ppi-publicar-feed-v2.service|ppi-publicar-feed-v2) patron='publicar_feed_v2' ;;
+    *) echo "inactive"; rc=3; continue ;;
+  esac
+  if pgrep -f "$patron" >/dev/null 2>&1; then echo "active"; else echo "inactive"; rc=3; fi
+done
+exit $rc

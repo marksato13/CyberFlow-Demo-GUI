@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+producto/logs/
+producto/artifacts/feed-keys/
+*.pem

@@ -1,0 +1,81 @@
+# CyberFlow · laboratorio de demostración en Docker
+#
+# Cuatro contenedores en una red aislada 10.10.0.0/16 que copia las IP del
+# laboratorio real. El tráfico es REAL entre contenedores (no sale de tu PC):
+#
+#   cliente1 10.10.20.21 ─┐
+#   cliente2 10.10.20.22 ─┼──► srv-dmz 10.10.30.10 (web 80/443, login 8081, DNS 53)
+#   kali     10.10.20.30 ─┘        │
+#                                  └─ sensor (comparte la interfaz de srv-dmz):
+#                                     tcpdump → anillo PCAP · Suricata → eve.json
+#                                     motor (Isolation Forest + heurísticos)
+#                                     publicador v2 (feed firmado) · panel :8788
+#
+# Uso:  docker compose up -d --build      y abre http://127.0.0.1:8788
+
+name: cyberflow-demo
+
+networks:
+  lab:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/16
+          gateway: 10.10.0.1
+
+services:
+  srv-dmz:
+    build: ./contenedores/srv-dmz
+    hostname: srv-dmz
+    networks:
+      lab:
+        ipv4_address: 10.10.30.10
+    # El panel corre dentro del sensor, que comparte la red de srv-dmz:
+    # por eso el puerto se publica aquí. Solo en 127.0.0.1 (no en tu LAN).
+    ports:
+      - "127.0.0.1:${PUERTO_PANEL:-8788}:8788"
+    restart: unless-stopped
+
+  sensor:
+    build:
+      context: .
+      dockerfile: contenedores/sensor/Dockerfile
+    # Misma pila de red que srv-dmz: ve todo lo que entra y sale del servidor,
+    # igual que el espejo SPAN del laboratorio.
+    network_mode: "service:srv-dmz"
+    cap_add: [NET_ADMIN, NET_RAW]
+    depends_on: [srv-dmz]
+    environment:
+      - MODO_RESPUESTA=${MODO_RESPUESTA:-sombra}
+    restart: unless-stopped
+
+  cliente1:
+    build: ./contenedores/cliente
+    hostname: cliente1
+    networks:
+      lab:
+        ipv4_address: 10.10.20.21
+    depends_on: [srv-dmz]
+    restart: unless-stopped
+
+  cliente2:
+    build: ./contenedores/cliente
+    hostname: cliente2
+    networks:
+      lab:
+        ipv4_address: 10.10.20.22
+    depends_on: [srv-dmz]
+    restart: unless-stopped
+
+  kali:
+    build: ./contenedores/kali
+    hostname: kali
+    networks:
+      lab:
+        ipv4_address: 10.10.20.30
+    depends_on: [srv-dmz]
+    environment:
+      # AUTO=1: la Kali repite sola el ciclo de ataques (escaneo, fuerza bruta,
+      # flood HTTP) con pausas. AUTO=0: solo ataca cuando tú se lo pides.
+      - AUTO=${AUTO:-1}
+    restart: unless-stopped

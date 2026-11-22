@@ -1,0 +1,58 @@
+# =====================================================================
+#  CyberFlow - configuracion del LABORATORIO DE DEMOSTRACION (Docker)
+# ---------------------------------------------------------------------
+#  Misma estructura que la del Sensor1 (producto, main@41f741a). Solo cambia
+#  lo que depende del equipo: la interfaz (eth0 del contenedor), las rutas y
+#  la lista de exclusion (aqui la gestion entra por la pasarela de Docker).
+#  Modelo, umbral, ventanas y paso del motor son los del laboratorio.
+# =====================================================================
+
+[captura]
+interfaz = "eth0"
+anillo_archivos = 16
+anillo_segundos = 5
+directorio = "/var/lib/ppi-motor-capture"
+retener_minutos = 15
+filtro_bpf = ""
+
+[red]
+red_entidades = "10.10.0.0/16"
+excluir_protocolos = [112, 240]
+excluir = [
+    "10.10.0.0/24",   # gestion: pasarela de Docker (tu navegador) y herramientas de la demo
+]
+
+[motor]
+detector = "if_limpio_2026_10"
+modo = "observacion"
+paso_segundos = 10
+historia_segundos = 230
+disparo = "eventos"
+umbral = 1.8126087939765134
+calibrado_en_esta_red = true
+bloqueo_segundos = 120
+
+[rutas]
+python = ""
+usuario = "root"
+raiz = "/opt/cyberflow"
+entorno = ""
+eve = "/var/log/suricata/eve.json"
+modelo = "artifacts/preliminar/limpio-2026-10/if_limpio_2026_10_desplegable.joblib"
+manifiesto = "artifacts/preliminar/limpio-2026-10/manifest-if-limpio-2026-10.json"
+manifiesto_motor = "artifacts/preliminar/limpio-alfa001-B/manifest-if-limpio-2026-10-alfa001.json"
+esquema = "configs/features/multilayer-v2.json"
+registro = "logs/motor_decision.log"
+
+[panel]
+activo = true
+direccion = "0.0.0.0"
+puerto = 8788
+permitir = []
+
+[reentrenamiento]
+# En la demo no se reentrena nada: el modelo es el congelado del laboratorio.
+activo = false
+base = ""
+ataques = ""
+excluir_ventanas = []
