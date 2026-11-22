@@ -30,7 +30,7 @@ sobre el tráfico que generan los contenedores en ese momento.
 **Windows (PowerShell)**
 
 ```powershell
-git clone <url-de-este-repositorio> cyberflow-demo
+git clone https://github.com/marksato13/CyberFlow-Demo-GUI.git cyberflow-demo
 cd cyberflow-demo
 .\demo.ps1 iniciar
 ```
@@ -40,7 +40,7 @@ cd cyberflow-demo
 **Linux / macOS / Git Bash**
 
 ```bash
-git clone <url-de-este-repositorio> cyberflow-demo
+git clone https://github.com/marksato13/CyberFlow-Demo-GUI.git cyberflow-demo
 cd cyberflow-demo
 ./demo.sh iniciar
 ```
